@@ -1,0 +1,13 @@
+{
+  "name": "browser-ujian2",
+  "version": "1.0.0",
+  "description": "Secure Exam Browser",
+  "main": "src/main2.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "electron": "^34.2.0",
+    "moment-timezone": "^0.5.47"
+  }
+}
