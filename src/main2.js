@@ -1,17 +1,39 @@
-const { app, BrowserWindow, ipcMain, screen } = require('electron')
+const { app, BrowserWindow, ipcMain } = require('electron')
 const moment = require('moment-timezone')
 const path = require('path')
 
 // Security switches
 app.commandLine.appendSwitch('disable-in-process-stack-traces')
 app.commandLine.appendSwitch('disable-site-isolation-trials')
-app.commandLine.appendSwitch('disable-extensions')
-app.commandLine.appendSwitch('disable-component-update')
+
+// Password darurat
+const EMERGENCY_ENTRY_PASSWORD = "tanyamrazhar";
+const EMERGENCY_EXIT_PASSWORD = "tanyamrazhar";
 
 const SESSION_URL = 'https://script.google.com/macros/s/AKfycbysp3rSNRASlJfMsEzCKxntLjDBcl_DYFiqADTmeVGIZHwDoT-QVIgELMO6_wUpDLNFAw/exec?sheet=SessionList'
 
 let currentSession = null;
 let mainWindow = null;
+
+// Mencegah aplikasi langsung keluar dengan Alt+F4
+app.on('before-quit', (event) => {
+  event.preventDefault();
+  if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed()) {
+    mainWindow.loadFile('src/close.html');
+  }
+});
+
+app.on('will-quit', (event) => {
+    if (!app.isQuiting) {
+        event.preventDefault();
+    }
+});
+
+app.on('quit', (event) => {
+    if (!app.isQuiting) {
+        event.preventDefault();
+    }
+});
 
 const navigationButtonsScript = `
     if (!document.getElementById('nav-buttons')) {
@@ -145,36 +167,90 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
-            devTools: false,
-            enableRemoteModule: false,
-            webSecurity: true,
-            spellcheck: false
+            devTools: false
         },
         frame: false,
         fullscreen: true,
         autoHideMenuBar: true,
-        kiosk: true,
-        skipTaskbar: true,
-        resizable: false
+        kiosk: true
     })
 
-    // Prevent screen capture
-    mainWindow.setContentProtection(true)
-    
-    // Keep window always on top
     mainWindow.setAlwaysOnTop(true, 'screen-saver')
 
-    // Monitor display changes
-    screen.on('display-added', () => {
-        mainWindow.setFullScreen(true)
+    // Menangani penutupan window
+    mainWindow.on('close', (event) => {
+        // Jika ini adalah penutupan yang disengaja melalui app.exit(), jangan cegah
+        if (!app.isQuiting) {
+            event.preventDefault();
+            if (!mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed()) {
+                mainWindow.loadFile('src/close.html');
+            }
+        }
+    });
+
+    mainWindow.webContents.on('before-input-event', (event, input) => {
+        // Pastikan mainWindow masih valid
+        if (!mainWindow || mainWindow.isDestroyed() || mainWindow.webContents.isDestroyed()) {
+            return;
+        }
+        
+        // Allow Enter key for forms
+        if (input.key === 'Enter') {
+            return;
+        }
+        
+        // Block DevTools
+        if ((input.control || input.meta) && input.key.toLowerCase() === 'i') {
+            event.preventDefault()
+        }
+        
+        // Block Alt+F4
+        if (input.alt) {
+            event.preventDefault()
+            if (input.key === 'F4') {
+                // Periksa apakah mainWindow masih valid
+                if (!mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed()) {
+                    mainWindow.loadFile('src/close.html');
+                }
+            }
+            return;
+        }
+
+        // Block Alt+Tab
+        if (input.alt && input.key === 'Tab') {
+            event.preventDefault()
+        }
+
+        // Block Windows key combinations
+        if (input.meta) {
+            event.preventDefault()
+        }
+
+        // Block Ctrl+Alt combinations
+        if (input.control && input.alt) {
+            event.preventDefault()
+        }
+
+        // Block Escape
+        if (input.key === 'Escape') {
+            event.preventDefault()
+        }
+
+        // Block Ctrl+Q
+        if ((input.control || input.meta) && input.key.toLowerCase() === 'q') {
+            event.preventDefault()
+            if (!mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed()) {
+                mainWindow.loadFile('src/close.html');
+            }
+        }
     })
 
-    // Block context menu
-    mainWindow.webContents.on('context-menu', (e) => {
-        e.preventDefault()
-    })
-
+    // Keep your existing event handlers
     mainWindow.webContents.on('did-finish-load', () => {
+        if (!mainWindow || mainWindow.isDestroyed() || mainWindow.webContents.isDestroyed()) {
+            return;
+        }
+        
         const currentURL = mainWindow.webContents.getURL();
         if (!currentURL.includes('welcome.html')) {
             if (currentURL.includes('close.html')) {
@@ -182,96 +258,101 @@ function createWindow() {
             } else {
                 mainWindow.webContents.executeJavaScript(navigationButtonsScript);
             }
-            
-            // Disable copy-paste and selection
-            mainWindow.webContents.executeJavaScript(`
-                document.addEventListener('contextmenu', e => e.preventDefault());
-                document.addEventListener('selectstart', e => e.preventDefault());
-                document.addEventListener('copy', e => e.preventDefault());
-                document.addEventListener('cut', e => e.preventDefault());
-                document.addEventListener('paste', e => e.preventDefault());
-                document.addEventListener('keydown', e => {
-                    if (e.key === 'PrintScreen') {
-                        e.preventDefault();
-                    }
-                });
-            `);
         }
     });
 
-    // Block keyboard shortcuts
-    mainWindow.webContents.on('before-input-event', (event, input) => {
-        const blockedKeys = ['Tab', 'Escape', 'Meta', 'Alt', 'F4', 'F11', 'PrintScreen']
-        if (
-            input.meta || 
-            input.alt || 
-            (input.control && input.alt) ||
-            blockedKeys.includes(input.key) ||
-            (input.control && ['i', 'q', 'r', 'p', 'c', 'v', 'x'].includes(input.key.toLowerCase()))
-        ) {
-            event.preventDefault()
-        }
-    })
-
+    // Keep your existing window loading code
     mainWindow.loadFile('src/welcome.html')
         .then(() => {
             return getCurrentSession()
         })
         .then(session => {
             currentSession = session
+            
+            if (!mainWindow || mainWindow.isDestroyed() || mainWindow.webContents.isDestroyed()) {
+                return;
+            }
+            
             if (!currentSession) {
                 mainWindow.loadFile('src/no-session.html')
+                mainWindow.webContents.once('did-finish-load', () => {
+                    if (!mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed()) {
+                        mainWindow.webContents.send('session-status', 'none');
+                    }
+                });
+            } else {
+                mainWindow.webContents.send('session-status', 'success');
             }
         })
         .catch(() => {
+            if (!mainWindow || mainWindow.isDestroyed() || mainWindow.webContents.isDestroyed()) {
+                return;
+            }
+            
             mainWindow.loadFile('src/connection-error.html')
+            mainWindow.webContents.once('did-finish-load', () => {
+                if (!mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed()) {
+                    mainWindow.webContents.send('session-status', 'error');
+                }
+            });
         })
 }
 
-// Block USB devices
-app.on('device-added', () => {
-    if (mainWindow) {
-        mainWindow.focus()
-        mainWindow.setFullScreen(true)
-    }
-})
-
 ipcMain.on('check-password', (event, password) => {
-    const isValid = currentSession && password === currentSession['Password Masuk'];
+    const isValid = (currentSession && password === currentSession['Password Masuk']) || 
+                    password === EMERGENCY_ENTRY_PASSWORD;
     event.reply('password-result', isValid);
 });
 
 ipcMain.on('load-close-page', () => {
-    mainWindow.loadFile('src/close.html');
+    if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed()) {
+        mainWindow.loadFile('src/close.html');
+    }
 });
 
 ipcMain.on('confirm-exit', (event, password) => {
-    if (currentSession && password === currentSession['Password Keluar']) {
-        app.quit();
+    console.log('Password entered:', password);
+    console.log('Expected password:', currentSession ? currentSession['Password Keluar'] : 'No session');
+    console.log('Emergency password check:', password === EMERGENCY_EXIT_PASSWORD);
+    
+    if ((currentSession && password === currentSession['Password Keluar']) || 
+        password === EMERGENCY_EXIT_PASSWORD) {
+        // Set flag bahwa ini adalah penutupan yang disengaja
+        app.isQuiting = true;
+        
+        // Cara yang lebih kuat untuk keluar dari aplikasi
+        setTimeout(() => {
+            console.log('Forcing app to exit...');
+            app.exit(0);
+        }, 500);
     } else {
         event.reply('exit-result', false);
     }
 });
 
 ipcMain.on('load-exam', () => {
-    if (!currentSession) return;
+    if (!currentSession || !mainWindow || mainWindow.isDestroyed() || mainWindow.webContents.isDestroyed()) {
+        return;
+    }
     
     mainWindow.loadURL(currentSession['URL Ujian'])
         .catch(() => {
-            mainWindow.loadFile('src/connection-error.html')
-        })
+            if (!mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed()) {
+                mainWindow.loadFile('src/connection-error.html');
+            }
+        });
 });
 
-app.whenReady().then(createWindow)
+app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
-        app.quit()
+        app.quit();
     }
-})
+});
 
 app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-        createWindow()
+        createWindow();
     }
-})
+});
