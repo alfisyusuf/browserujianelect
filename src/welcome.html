@@ -150,6 +150,18 @@
         </div>
     </div>
 
+    <div id="session-status" style="
+        position: fixed; 
+        bottom: 10px; 
+        right: 10px; 
+        background: rgba(0,0,0,0.7); 
+        color: white; 
+        padding: 8px 12px; 
+        border-radius: 4px; 
+        font-size: 12px;
+        display: none;
+    ">Memeriksa sesi...</div>
+
     <script>
         const { ipcRenderer } = require('electron');
         
@@ -174,6 +186,25 @@
                 errorMsg.style.display = 'block';
                 errorMsg.style.animation = 'none';
                 setTimeout(() => errorMsg.style.animation = 'shake 0.5s ease-in-out', 10);
+            }
+        });
+
+        ipcRenderer.on('session-status', (event, status) => {
+            const statusElement = document.getElementById('session-status');
+            statusElement.style.display = 'block';
+            
+            if (status === 'success') {
+                statusElement.textContent = 'Sesi aktif ditemukan';
+                statusElement.style.background = 'rgba(40, 167, 69, 0.8)';
+                setTimeout(() => {
+                    statusElement.style.display = 'none';
+                }, 3000);
+            } else if (status === 'none') {
+                statusElement.textContent = 'Tidak ada sesi aktif';
+                statusElement.style.background = 'rgba(255, 193, 7, 0.8)';
+            } else {
+                statusElement.textContent = 'Gagal memeriksa sesi';
+                statusElement.style.background = 'rgba(220, 53, 69, 0.8)';
             }
         });
     </script>
