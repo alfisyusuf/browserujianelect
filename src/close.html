@@ -57,6 +57,7 @@
             letter-spacing: 1px;
             transition: all 0.3s ease;
             text-transform: uppercase;
+            margin: 10px 5px;
         }
         button:hover {
             transform: translateY(-2px);
@@ -66,6 +67,17 @@
             color: #f44336;
             margin: 10px 0;
             display: none;
+            animation: shake 0.5s ease-in-out;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .button-group {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
         }
     </style>
 </head>
@@ -76,11 +88,20 @@
             <input type="password" id="password" placeholder="Masukkan Password Keluar" autocomplete="off">
             <div id="error-message" class="error-message">Password salah!</div>
         </div>
-        <button id="confirm-btn">Konfirmasi</button>
+        <div class="button-group">
+            <button id="back-btn">Kembali</button>
+            <button id="confirm-btn">Konfirmasi</button>
+        </div>
     </div>
 
     <script>
         const { ipcRenderer } = require('electron');
+        let hasActiveSession = false;
+        
+        // Terima informasi apakah ada sesi aktif atau tidak
+        ipcRenderer.on('session-available', (event, available) => {
+            hasActiveSession = available;
+        });
         
         document.getElementById('confirm-btn').addEventListener('click', () => {
             const password = document.getElementById('password').value;
@@ -90,6 +111,16 @@
         document.getElementById('password').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 document.getElementById('confirm-btn').click();
+            }
+        });
+
+        document.getElementById('back-btn').addEventListener('click', () => {
+            if (hasActiveSession) {
+                // Jika ada sesi aktif, kembali ke halaman ujian
+                ipcRenderer.send('load-exam');
+            } else {
+                // Jika tidak ada sesi aktif, kembali ke halaman no-session
+                ipcRenderer.send('load-no-session');
             }
         });
 

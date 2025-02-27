@@ -1,31 +1,84 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>No Active Session</title>
+    <title>Tidak Ada Sesi Aktif</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            height: 100vh;
+            background: url('./tes.webp') no-repeat center center fixed;
+            background-size: cover;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f0f0f0;
         }
-        .message {
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(8px);
             text-align: center;
-            padding: 20px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 90%;
+        }
+        h2 {
+            color: #1a237e;
+            margin-bottom: 20px;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        p {
+            color: #424242;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        .exit-button {
+            background: linear-gradient(45deg, #f44336, #e53935);
+            color: white;
+            padding: 14px 35px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            margin-top: 20px;
+        }
+        .exit-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(229, 57, 53, 0.4);
+            background: linear-gradient(45deg, #e53935, #f44336);
+        }
+        .logo {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
-    <div class="message">
-        <h2>No Active Exam Session</h2>
-        <p>There is no exam session currently active.</p>
-        <p>Please check the schedule and try again during exam hours.</p>
+    <div class="container">
+        <img src="./SMA_ABBS.png" alt="Logo" class="logo">
+        <h2>Tidak Ada Sesi Ujian Aktif</h2>
+        <p>Saat ini tidak ada sesi ujian yang aktif. Silakan periksa jadwal ujian dan coba lagi pada waktu yang telah ditentukan.</p>
+        <p>Jika Anda yakin seharusnya ada sesi yang aktif, silakan hubungi pengawas ujian.</p>
+        <button class="exit-button" id="exit-btn">Keluar Aplikasi</button>
     </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+        
+        document.getElementById('exit-btn').addEventListener('click', () => {
+            // Konfirmasi sebelum keluar
+            if(confirm('Apakah Anda yakin ingin keluar dari aplikasi?')) {
+                ipcRenderer.send('no-session-exit');
+            }
+        });
+    </script>
 </body>
 </html>

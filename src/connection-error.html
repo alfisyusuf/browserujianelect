@@ -1,60 +1,142 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Connection Error</title>
+    <title>Koneksi Gagal</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            height: 100vh;
+            background: url('./tes.webp') no-repeat center center fixed;
+            background-size: cover;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f8f9fa;
         }
         .error-container {
-            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
             padding: 40px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            max-width: 500px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(8px);
+            text-align: center;
+            max-width: 450px;
+            width: 90%;
+            animation: float 1s ease-out;
+        }
+        @keyframes float {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
         .error-icon {
-            font-size: 48px;
-            color: #dc3545;
+            font-size: 64px;
+            color: #e74c3c;
             margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
         h2 {
-            color: #343a40;
-            margin-bottom: 16px;
+            color: #1a237e;
+            margin-bottom: 20px;
+            font-size: 28px;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
         }
         p {
-            color: #6c757d;
+            color: #546e7a;
             line-height: 1.6;
-        }
-        .retry-button {
-            margin-top: 20px;
-            padding: 10px 20px;
-            background-color: #0d6efd;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+            margin-bottom: 10px;
             font-size: 16px;
         }
-        .retry-button:hover {
-            background-color: #0b5ed7;
+        button {
+            background: linear-gradient(45deg, #3f51b5, #5c6bc0);
+            color: white;
+            padding: 14px 30px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            margin-top: 20px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(63, 81, 181, 0.4);
+            background: linear-gradient(45deg, #5c6bc0, #3f51b5);
+        }
+        .nav-buttons {
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            display: flex;
+        }
+        .nav-button {
+            background: linear-gradient(45deg, #3f51b5, #5c6bc0);
+            color: white;
+            padding: 12px 30px;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-top: 0;
+        }
+        .nav-button-left {
+            border-bottom-left-radius: 12px;
+        }
+        .nav-button-right {
+            border-bottom-right-radius: 12px;
+        }
+        .nav-button:hover {
+            background: linear-gradient(45deg, #5c6bc0, #3f51b5);
+            box-shadow: 0 3px 8px rgba(63, 81, 181, 0.3);
+        }
+        .nav-button:active {
+            transform: translateY(1px);
         }
     </style>
 </head>
 <body>
+    
+    
     <div class="error-container">
         <div class="error-icon">⚠️</div>
         <h2>Koneksi Gagal</h2>
         <p>Maaf, tidak dapat terhubung ke server ujian.</p>
         <p>Silakan periksa koneksi internet Anda dan coba lagi.</p>
-        <button class="retry-button" onclick="window.location.reload()">Coba Lagi</button>
+        <button id="retry-btn">Coba Lagi</button>
     </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+        
+        // Tombol coba lagi
+        document.getElementById('retry-btn').addEventListener('click', () => {
+            // Coba muat ulang sesi
+            ipcRenderer.send('retry-connection');
+        });
+        
+        // Tombol home (sama dengan tombol yang ada di halaman lain)
+        document.getElementById('home-btn').addEventListener('click', () => {
+            ipcRenderer.send('check-session-and-navigate-back');
+        });
+        
+        // Tombol keluar (sama dengan tombol yang ada di halaman lain)
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            ipcRenderer.send('load-close-page');
+        });
+    </script>
 </body>
 </html>
