@@ -1,10 +1,12 @@
-const { app, BrowserWindow, ipcMain } = require('electron')
+const { app, BrowserWindow, ipcMain, screen, globalShortcut } = require('electron')
 const moment = require('moment-timezone')
 const path = require('path')
 
 // Security switches
 app.commandLine.appendSwitch('disable-in-process-stack-traces')
 app.commandLine.appendSwitch('disable-site-isolation-trials')
+app.commandLine.appendSwitch('disable-extensions')
+app.commandLine.appendSwitch('disable-component-update')
 
 // Password darurat
 const EMERGENCY_ENTRY_PASSWORD = "tanyamrazhar";
@@ -14,6 +16,7 @@ const SESSION_URL = 'https://script.google.com/macros/s/AKfycbysp3rSNRASlJfMsEzC
 
 let currentSession = null;
 let mainWindow = null;
+let forceAlwaysOnTopInterval = null;
 
 // Mencegah aplikasi langsung keluar dengan Alt+F4
 app.on('before-quit', (event) => {
@@ -34,6 +37,31 @@ app.on('quit', (event) => {
         event.preventDefault();
     }
 });
+
+// Fungsi untuk memaksa window tetap di atas dan terfokus
+function enforceAlwaysOnTop() {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        // Ini lebih kuat dibanding screen-saver
+        mainWindow.setAlwaysOnTop(true, 'pop-up-menu');
+        
+        // Pastikan window di fokus
+        mainWindow.focus();
+        mainWindow.focusOnWebView();
+        
+        // Jika tidak fullscreen, paksa ke fullscreen
+        if (!mainWindow.isFullScreen()) {
+            mainWindow.setFullScreen(true);
+        }
+        
+        // Jika minimized, maksimalkan kembali
+        if (mainWindow.isMinimized()) {
+            mainWindow.restore();
+        }
+        
+        // Buat window kembali menjadi topmost melalui z-order
+        mainWindow.moveTop();
+    }
+}
 
 const navigationButtonsScript = `
     if (!document.getElementById('nav-buttons')) {
@@ -140,6 +168,21 @@ const backButtonScript = `
     }
 `;
 
+// Script untuk memastikan fokus tetap pada aplikasi
+const focusEnforcerScript = `
+    // Pantau fokus, kembali ke window saat blur
+    window.addEventListener('blur', function() {
+        setTimeout(() => {
+            window.focus();
+        }, 100);
+    });
+    
+    // Force focus terus-menerus
+    setInterval(function() {
+        window.focus();
+    }, 1000);
+`;
+
 async function getCurrentSession() {
     try {
         const response = await fetch(SESSION_URL)
@@ -167,15 +210,49 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
-            devTools: false
+            devTools: false,
+            enableRemoteModule: false,
+            webSecurity: true,
+            spellcheck: false
         },
         frame: false,
         fullscreen: true,
         autoHideMenuBar: true,
-        kiosk: true
+        kiosk: true,
+        skipTaskbar: true,
+        resizable: false,
+        focusable: true,
+        fullscreenable: true,
+        minimizable: false,
+        maximizable: true,
+        closable: false,
+        movable: false
     })
 
-    mainWindow.setAlwaysOnTop(true, 'screen-saver')
+    // Prevent screen capture
+    mainWindow.setContentProtection(true)
+    
+    // Keep window always on top dengan level lebih tinggi
+    mainWindow.setAlwaysOnTop(true, 'pop-up-menu')
+    mainWindow.setVisibleOnAllWorkspaces(true);
+    
+    // Interval untuk selalu memastikan window tetap di atas
+    forceAlwaysOnTopInterval = setInterval(enforceAlwaysOnTop, 500);
+
+    // Monitor display changes
+    screen.on('display-added', () => {
+        mainWindow.setFullScreen(true)
+        enforceAlwaysOnTop();
+    })
+
+    // Ketika aplikasi kehilangan fokus, paksa kembali fokus
+    mainWindow.on('blur', () => {
+        if (!mainWindow.isDestroyed()) {
+            setTimeout(() => {
+                enforceAlwaysOnTop();
+            }, 100);
+        }
+    });
 
     // Menangani penutupan window
     mainWindow.on('close', (event) => {
@@ -188,64 +265,11 @@ function createWindow() {
         }
     });
 
-    mainWindow.webContents.on('before-input-event', (event, input) => {
-        // Pastikan mainWindow masih valid
-        if (!mainWindow || mainWindow.isDestroyed() || mainWindow.webContents.isDestroyed()) {
-            return;
-        }
-        
-        // Allow Enter key for forms
-        if (input.key === 'Enter') {
-            return;
-        }
-        
-        // Block DevTools
-        if ((input.control || input.meta) && input.key.toLowerCase() === 'i') {
-            event.preventDefault()
-        }
-        
-        // Block Alt+F4
-        if (input.alt) {
-            event.preventDefault()
-            if (input.key === 'F4') {
-                // Periksa apakah mainWindow masih valid
-                if (!mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed()) {
-                    mainWindow.loadFile('src/close.html');
-                }
-            }
-            return;
-        }
-
-        // Block Alt+Tab
-        if (input.alt && input.key === 'Tab') {
-            event.preventDefault()
-        }
-
-        // Block Windows key combinations
-        if (input.meta) {
-            event.preventDefault()
-        }
-
-        // Block Ctrl+Alt combinations
-        if (input.control && input.alt) {
-            event.preventDefault()
-        }
-
-        // Block Escape
-        if (input.key === 'Escape') {
-            event.preventDefault()
-        }
-
-        // Block Ctrl+Q
-        if ((input.control || input.meta) && input.key.toLowerCase() === 'q') {
-            event.preventDefault()
-            if (!mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed()) {
-                mainWindow.loadFile('src/close.html');
-            }
-        }
+    // Block context menu
+    mainWindow.webContents.on('context-menu', (e) => {
+        e.preventDefault()
     })
 
-    // Keep your existing event handlers
     mainWindow.webContents.on('did-finish-load', () => {
         if (!mainWindow || mainWindow.isDestroyed() || mainWindow.webContents.isDestroyed()) {
             return;
@@ -258,10 +282,51 @@ function createWindow() {
             } else {
                 mainWindow.webContents.executeJavaScript(navigationButtonsScript);
             }
+            
+            // Disable copy-paste and selection
+            mainWindow.webContents.executeJavaScript(`
+                document.addEventListener('contextmenu', e => e.preventDefault());
+                document.addEventListener('selectstart', e => e.preventDefault());
+                document.addEventListener('copy', e => e.preventDefault());
+                document.addEventListener('cut', e => e.preventDefault());
+                document.addEventListener('paste', e => e.preventDefault());
+                document.addEventListener('keydown', e => {
+                    if (e.key === 'PrintScreen') {
+                        e.preventDefault();
+                    }
+                });
+            `);
+            
+            // Tambahkan script untuk memastikan fokus
+            mainWindow.webContents.executeJavaScript(focusEnforcerScript);
         }
     });
 
-    // Keep your existing window loading code
+    // Block keyboard shortcuts
+    mainWindow.webContents.on('before-input-event', (event, input) => {
+        // Pastikan mainWindow masih valid
+        if (!mainWindow || mainWindow.isDestroyed() || mainWindow.webContents.isDestroyed()) {
+            return;
+        }
+        
+        const blockedKeys = ['Tab', 'Escape', 'Meta', 'Alt', 'F4', 'F11', 'PrintScreen']
+        if (
+            input.meta || 
+            input.alt || 
+            (input.control && input.alt) ||
+            blockedKeys.includes(input.key) ||
+            (input.control && ['i', 'q', 'r', 'p', 'c', 'v', 'x'].includes(input.key.toLowerCase()))
+        ) {
+            event.preventDefault()
+            // Khusus untuk Alt+F4, arahkan ke halaman keluar
+            if (input.alt && input.key === 'F4') {
+                if (!mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed()) {
+                    mainWindow.loadFile('src/close.html');
+                }
+            }
+        }
+    })
+
     mainWindow.loadFile('src/welcome.html')
         .then(() => {
             return getCurrentSession()
@@ -298,6 +363,24 @@ function createWindow() {
         })
 }
 
+// Block USB devices
+app.on('device-added', () => {
+    if (mainWindow) {
+        mainWindow.focus()
+        mainWindow.setFullScreen(true)
+        enforceAlwaysOnTop();
+    }
+})
+
+// Pantau perubahan fokus di sistem operasi
+app.on('browser-window-blur', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        setTimeout(() => {
+            enforceAlwaysOnTop();
+        }, 100);
+    }
+});
+
 ipcMain.on('check-password', (event, password) => {
     const isValid = (currentSession && password === currentSession['Password Masuk']) || 
                     password === EMERGENCY_ENTRY_PASSWORD;
@@ -319,6 +402,14 @@ ipcMain.on('confirm-exit', (event, password) => {
         password === EMERGENCY_EXIT_PASSWORD) {
         // Set flag bahwa ini adalah penutupan yang disengaja
         app.isQuiting = true;
+        
+        // Clear interval
+        if (forceAlwaysOnTopInterval) {
+            clearInterval(forceAlwaysOnTopInterval);
+        }
+        
+        // Unregister shortcuts
+        globalShortcut.unregisterAll();
         
         // Cara yang lebih kuat untuk keluar dari aplikasi
         setTimeout(() => {
@@ -343,16 +434,47 @@ ipcMain.on('load-exam', () => {
         });
 });
 
-app.whenReady().then(createWindow);
+// Register global shortcuts
+app.whenReady().then(() => {
+    // Register globalShortcuts first to prevent app switching
+    globalShortcut.register('Alt+Tab', () => {
+        console.log('Alt+Tab is disabled');
+        enforceAlwaysOnTop();
+        return false;
+    });
+    
+    globalShortcut.register('Alt+Shift+Tab', () => {
+        console.log('Alt+Shift+Tab is disabled');
+        enforceAlwaysOnTop();
+        return false;
+    });
+    
+    globalShortcut.register('Alt+F4', () => {
+        console.log('Alt+F4 is disabled');
+        if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.loadFile('src/close.html');
+        }
+        return false;
+    });
+    
+    globalShortcut.register('Alt+Escape', () => {
+        console.log('Alt+Escape is disabled');
+        enforceAlwaysOnTop();
+        return false;
+    });
+    
+    // Lalu buat window
+    createWindow();
+});
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
-        app.quit();
+        app.quit()
     }
-});
+})
 
 app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-        createWindow();
+        createWindow()
     }
-});
+})
