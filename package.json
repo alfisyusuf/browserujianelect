@@ -2,7 +2,7 @@
   "name": "browser-ujian2",
   "version": "1.0.0",
   "description": "Secure Exam Browser",
-  "main": "src/main2.js",
+  "main": "src/main3.js",
   "scripts": {
     "start": "electron ."
   },
