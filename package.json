@@ -4,10 +4,43 @@
   "description": "Secure Exam Browser",
   "main": "src/main3.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
   },
   "dependencies": {
     "electron": "^34.2.0",
     "moment-timezone": "^0.5.47"
+  },
+  "devDependencies": {
+    "electron-builder": "^24.6.0"
+  },
+  "build": {
+    "appId": "com.example.browser-ujian",
+    "productName": "Browser Ujian",
+    "icon": "logoapp",
+    "win": {
+      "icon": "logoapp.ico",
+      "target": ["nsis", "zip"]
+    },
+    "mac": {
+      "icon": "logoapp.icns",
+      "category": "public.app-category.education",
+      "target": ["dmg", "zip"]
+    },
+    "linux": {
+      "icon": "logoapp.png",
+      "target": ["AppImage", "deb"]
+    },
+    "directories": {
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "extraMetadata": {
+      "main": "src/main3.js"
+    }
   }
 }
