@@ -20,7 +20,9 @@
     "appId": "com.browserujian.app",
     "productName": "BrowserUjian",
     "mac": {
+      "category": "public.app-category.education",
       "target": "dmg",
+      "icon": "logoapp.icns",
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
       "entitlements": "entitlements.mac.plist",
