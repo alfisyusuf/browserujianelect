@@ -1,0 +1,30 @@
+# Versi konfigurasi AppVeyor
+version: 1.0.{build}
+
+# Lingkungan build
+image: Visual Studio 2022
+
+# Aktifkan cross-build untuk macOS menggunakan node-gyp
+environment:
+  nodejs_version: "18"
+  ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+
+# Instalasi dependencies
+install:
+  - ps: Install-Product node $env:nodejs_version
+  - npm install -g npm@latest
+  - npm install
+  - npm install -g electron-builder
+
+# Build Electron untuk Windows dan macOS
+build_script:
+  - npm run dist
+
+# Artifacts (output build) untuk didownload manual dari AppVeyor
+artifacts:
+  - path: dist/*.exe
+    name: WindowsInstaller
+  - path: dist/*.dmg
+    name: MacOSInstaller
+  - path: dist/*.zip
+    name: MacOSZip
