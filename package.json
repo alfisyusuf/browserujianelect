@@ -20,9 +20,12 @@
     "appId": "com.browserujian.app",
     "productName": "BrowserUjian",
     "mac": {
-      "category": "public.app-category.education",
-      "target": ["dmg", "zip"],
-      "icon": "logoapp.icns"
+      "target": "dmg",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "entitlements.mac.plist",
+      "entitlementsInherit": "entitlements.mac.plist",
+      "minimumSystemVersion": "10.14.0"
     },
     "win": {
       "target": ["nsis"],
