@@ -1,12 +1,28 @@
 {
-  "name": "browser-ujian2",
+  "name": "browser-ujian",
   "version": "1.0.0",
   "description": "Secure Exam Browser",
+  "author": "Alfi Suryani Yusuf",
   "main": "src/main3.js",
   "scripts": {
     "start": "electron .",
-    "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac"
+  },
+  "build": {
+    "appId": "com.alfi.browserujian",
+    "productName": "BrowserUjian",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "logoapp.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "logoapp.icns"
+    }
   },
   "dependencies": {
     "electron": "^34.2.0",
@@ -14,33 +30,5 @@
   },
   "devDependencies": {
     "electron-builder": "^24.6.0"
-  },
-  "build": {
-    "appId": "com.example.browser-ujian",
-    "productName": "Browser Ujian",
-    "icon": "logoapp",
-    "win": {
-      "icon": "logoapp.ico",
-      "target": ["nsis", "zip"]
-    },
-    "mac": {
-      "icon": "logoapp.icns",
-      "category": "public.app-category.education",
-      "target": ["dmg", "zip"]
-    },
-    "linux": {
-      "icon": "logoapp.png",
-      "target": ["AppImage", "deb"]
-    },
-    "directories": {
-      "buildResources": "build"
-    },
-    "files": [
-      "src/**/*",
-      "package.json"
-    ],
-    "extraMetadata": {
-      "main": "src/main3.js"
-    }
   }
 }
