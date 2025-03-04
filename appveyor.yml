@@ -1,29 +1,26 @@
 version: 1.0.{build}
 
-# Gunakan Windows dan macOS Catalina
-matrix:
-  fast_finish: true
-  allow_failures:
-    - image: macos-catalina
+image: macos-mojave
 
 environment:
   nodejs_version: "18"
 
 install:
-  - ps: Install-Product node $env:nodejs_version
-  - npm install
-  - npm install -g electron-builder
+  - echo "Installing Node.js"
+  - curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
+  - source ~/.nvm/nvm.sh
+  - nvm install $nodejs_version
+  - nvm use $nodejs_version
+  - node -v
+  - npm -v
 
-# Build untuk Windows dan macOS
+  - echo "Installing dependencies"
+  - npm install
+
 build_script:
-  - npm run build:win
+  - echo "Building macOS app"
   - npm run build:mac
 
 artifacts:
   - path: dist/*
-    name: BrowserUjian
-
-cache:
-  - node_modules
-  - "%LOCALAPPDATA%\\electron\\Cache"
-  - "~/Library/Caches/electron"
+    name: BrowserUjian-macOS

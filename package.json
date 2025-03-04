@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Secure Exam Browser",
   "author": "Alfi Suryani Yusuf",
-  "main": "src/main.js",
+  "main": "src/main3.js",
   "scripts": {
     "start": "electron .",
     "build:win": "electron-builder --win",
@@ -14,22 +14,19 @@
   },
   "devDependencies": {
     "electron": "^34.2.0",
-    "electron-builder": "^24.6.0"
+    "electron-builder": "^24.13.3"
   },
   "build": {
-    "appId": "com.alfi.browserujian",
+    "appId": "com.browserujian.app",
     "productName": "BrowserUjian",
-    "win": {
-      "target": "nsis",
-      "icon": "logoapp.ico"
-    },
     "mac": {
-      "target": "dmg",
+      "category": "public.app-category.education",
+      "target": ["dmg", "zip"],
       "icon": "logoapp.icns"
     },
-    "files": [
-      "src/**/*",
-      "package.json"
-    ]
+    "win": {
+      "target": ["nsis"],
+      "icon": "logoapp.ico"
+    }
   }
 }
