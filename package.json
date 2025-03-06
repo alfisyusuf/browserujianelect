@@ -2,7 +2,8 @@
   "name": "browser-ujian",
   "version": "1.0.0",
   "description": "Secure Exam Browser",
-  "main": "src/main.js",
+  "author": "Alfi Suryani Yusuf",
+  "main": "src/main3.js",
   "scripts": {
     "start": "electron .",
     "build:win": "electron-builder --win --ia32 --x64"
