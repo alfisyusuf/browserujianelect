@@ -1,0 +1,26 @@
+version: 1.0.{build}
+
+image: macos-mojave
+
+environment:
+  nodejs_version: "18"
+
+install:
+  - echo "Installing Node.js"
+  - curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
+  - source ~/.nvm/nvm.sh
+  - nvm install $nodejs_version
+  - nvm use $nodejs_version
+  - node -v
+  - npm -v
+
+  - echo "Installing dependencies"
+  - npm install
+
+build_script:
+  - echo "Building macOS app"
+  - npm run build:mac
+
+artifacts:
+  - path: dist/*
+    name: BrowserUjian-macOS

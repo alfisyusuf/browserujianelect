@@ -1,0 +1,37 @@
+{
+  "name": "browser-ujian",
+  "version": "1.0.0",
+  "description": "Secure Exam Browser",
+  "author": "Alfi Suryani Yusuf",
+  "main": "src/main3.js",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac"
+  },
+  "dependencies": {
+    "moment-timezone": "^0.5.47"
+  },
+  "devDependencies": {
+    "electron": "^34.2.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.browserujian.app",
+    "productName": "BrowserUjian",
+    "mac": {
+      "category": "public.app-category.education",
+      "target": "dmg",
+      "icon": "logoapp.icns",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "entitlements.mac.plist",
+      "entitlementsInherit": "entitlements.mac.plist",
+      "minimumSystemVersion": "10.14.0"
+    },
+    "win": {
+      "target": ["nsis"],
+      "icon": "logoapp.ico"
+    }
+  }
+}
