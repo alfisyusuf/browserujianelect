@@ -1,19 +1,23 @@
-version: 1.0.{build}
-image: Visual Studio 2022
-platform: x64
+environment:
+  nodejs_version: "18"
 
-install:
-  - ps: Install-Product node 20
-  - npm install
-  - npm install -g electron-builder
-
-build_script:
-  - npm run build:win
-
-artifacts:
-  - path: dist\*
-    name: BrowserUjian-Windows
+platform:
+  - x64
 
 cache:
-  - node_modules -> package-lock.json
+  - node_modules
+  - '%APPDATA%\npm-cache'
+  - '%USERPROFILE%\.electron'
 
+install:
+  - ps: Install-Product node $env:nodejs_version $env:platform
+  - npm install
+
+build_script:
+  - npm run dist
+
+artifacts:
+  - path: dist\*.exe
+    name: BrowserUjianSetup
+
+deploy: off

@@ -1,32 +1,51 @@
 {
-  "name": "browser-ujian",
+  "name": "browser-ujian2",
   "version": "1.0.0",
   "description": "Secure Exam Browser",
   "author": "Alfi Suryani Yusuf",
-  "main": "src/main.js",
+  "main": "src/main3.js",
   "scripts": {
     "start": "electron .",
-    "build:win": "electron-builder --win"
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "publish": "electron-builder --publish always"
+  },
+  "dependencies": {
+    "moment-timezone": "^0.5.47"
+  },
+  "devDependencies": {
+    "electron": "^34.2.0",
+    "electron-builder": "^25.1.8"
   },
   "build": {
-    "appId": "com.alfi.browserujian",
+    "appId": "com.browser.ujian",
     "productName": "BrowserUjian",
     "directories": {
       "output": "dist"
-    },
-    "win": {
-      "target": "nsis",
-      "icon": "logoapp.ico"
     },
     "files": [
       "src/**/*",
       "package.json"
     ],
-    "asar": true
-  },
-  "devDependencies": {
-    "electron": "^30.0.0",
-    "electron-builder": "^24.13.3",
-    "moment-timezone": "^0.5.47"
+    "win": {
+      "target": "nsis",
+      "icon": "logoapp.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "installerIcon": "logoapp.ico",
+      "uninstallerIcon": "logoapp.ico",
+      "artifactName": "${productName}-Setup-${version}.${ext}"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "logoapp.ico"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "logoapp.ico"
+    }
   }
 }
