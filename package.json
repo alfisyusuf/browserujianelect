@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Secure Exam Browser",
   "author": "Alfi Suryani Yusuf",
-  "main": "src/main3.js",
+  "main": "src/main5.js",
   "scripts": {
     "start": "electron .",
     "pack": "electron-builder --dir",
